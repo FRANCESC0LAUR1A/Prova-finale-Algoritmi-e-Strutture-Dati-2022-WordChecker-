@@ -1,38 +1,26 @@
-//CONCETTO DI LAST VINCOLO
-//PRBBILMENTE RISPETTA VINCOLI NON è ottimizzato
-
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
-
-//int occurencesOutOfPOs[64];
-char missCharSet[64];
 
 
 struct BSTnode {
     char *word;
     struct BSTnode *left;
     struct BSTnode *right;
-    //struct RBnode *p;
-
-    //char color;
+    
 };
-
 
 
 struct gameVincolo {
     char *greenPattern;
+    
     int vincoliPerChar[128];
 
-
-    //in realtà questa è una matrice
-
-    //char = boolean in questo caso
+    
     char *redPattern;
 
-    unsigned char lastVincolo[64*3*100];
+    unsigned char lastVincolo[64*3*66];
 };
 
 struct nodoFiltrata{
@@ -50,13 +38,14 @@ struct gameVincolo *vincolo;
 
 
 int numParole = 0;
-size_t BUFF_SIZE = 302;
 unsigned int lunghezzaParole;
 bool abo = false;
 char currentCommand = '?';
 
 char *text;
+
 int validCharSet[64];
+char missCharSet[64];
 
 
 void getStringFromLine(char *s) {
@@ -183,7 +172,7 @@ void stampaVincolo();
 void stampaUltimoVincolo();
 
 
-//operazioni su RB
+
 void insertIntoDictionary(char *text);
 
 
@@ -761,12 +750,6 @@ bool processWord(char *rif, char *p, char *output) {
 void updateVincolo(char *parola, char *output) {
 
 
-    //bool temp_missing = false;
-    //int temp_minVolte = 0;
-
-
-    //bool missCharSet[64];
-
 
 
     for (int i = 0; i < 64; i++) {
@@ -792,7 +775,7 @@ void updateVincolo(char *parola, char *output) {
                 vincolo->lastVincolo[testina]='+';
                 vincolo->lastVincolo[testina+1]= j+48 ;
                 vincolo->lastVincolo[testina+2]= parola[j];
-                //vincolo->lastVincolo[testina+3]=')';
+
 
                 testina+=3;
             }
@@ -816,7 +799,7 @@ void updateVincolo(char *parola, char *output) {
                 vincolo->lastVincolo[testina]='/';
                 vincolo->lastVincolo[testina+1]= j+48 ;
                 vincolo->lastVincolo[testina+2]= parola[j];
-                //vincolo->lastVincolo[testina+3]=')';
+
 
                 testina+=3;
             }
@@ -848,11 +831,6 @@ void updateVincolo(char *parola, char *output) {
         }
 
     }
-    //aggiornamento vincolo: controlla variabili temp
-
-    //il green pattern è sempre restrittivo, non c'è bisogno di controllare
-    //anche il red pattern
-
     for (int j = 0; j < lunghezzaParole; ++j) {
 
         int charMappato = mapCharToInteger(parola[j]);
@@ -882,7 +860,7 @@ void updateVincolo(char *parola, char *output) {
                 vincolo->lastVincolo[testina] = 'E';
                 vincolo->lastVincolo[testina + 1] = mapCharToInteger(parola[j]);
                 vincolo->lastVincolo[testina + 2] = validCharSet[charMappato]+48;
-                //vincolo->lastVincolo[testina + 3] = ')';
+
                 testina += 3;
             }
             vincolo->vincoliPerChar[2*charMappato] = 1;
@@ -897,7 +875,7 @@ void updateVincolo(char *parola, char *output) {
                 vincolo->lastVincolo[testina] = 'M';
                 vincolo->lastVincolo[testina + 1] = mapCharToInteger(parola[j]);
                 vincolo->lastVincolo[testina + 2] = validCharSet[charMappato]+48;
-                //vincolo->lastVincolo[testina + 3] = ')';
+
                 testina += 3;
             }
             vincolo->vincoliPerChar[2 * charMappato + 1] = validCharSet[charMappato];
@@ -940,20 +918,11 @@ void stampaTutteLeParole(struct BSTnode *T){
 
 //non è gestito il caso in cui sono possibili commandi prima e tra la parola di riferimento e il numero massimo di tentativi
 void handlePartita() {
-    //bool newWordsSignal = false;
-    //struct nodoFiltrata *listaFiltrate = NULL;
-
-
-    //la lista qui è vuota
-    //inizializza tutto alla lista
 
 
     bool senzaVincolo=true;
     int numAmmis = numParole;
 
-    //initializeFiltrate( RBrootDizionario);
-
-    //initializeFiltrateConVincoli(RBrootDizionario, &numAmmis);
 
     char rif[lunghezzaParole];
 
@@ -969,6 +938,11 @@ void handlePartita() {
     if (r == 0) {}
     do {
 
+        if (tentativiRimasti == 0) {
+            fputs("ko\n", stdout);
+            currentCommand = '?';
+            return;
+        }
 
         getStringFromLine(text);
 
@@ -1000,11 +974,7 @@ void handlePartita() {
 
             }
         } else {
-            if (tentativiRimasti == 0) {
-                fputs("ko\n", stdout);
-                currentCommand = '?';
-                return;
-            }
+
 
             if (wordExistsInDictionary(text, lunghezzaParole)) {
 
@@ -1035,7 +1005,6 @@ void handlePartita() {
                 }
 
                 senzaVincolo=false;
-                //soluzione scorrendo tutto l'albero rosso nero
                 //numAmmis = getAmmissibili(RBrootDizionario);
 
                 fprintf(stdout, "%d", numAmmis);
@@ -1049,11 +1018,7 @@ void handlePartita() {
                 fputs("not_exists\n", stdout);
             }
 
-            if (tentativiRimasti == 0) {
-                fputs("ko\n", stdout);
-                currentCommand = '?';
-                return;
-            }
+
         }
     } while (!abo);
 
@@ -1068,24 +1033,7 @@ bool rispettaVincoli(char *parola) {
     for (int i = 0; i < 64; i++)
         validCharSet[i] = 0;
 
-
-
-    //bool es= true;
-    for (int j = 0; j < lunghezzaParole; j++) {
-        charMappato = mapCharToInteger(parola[j]);
-
-        //M
-        if (vincolo->vincoliPerChar[2*charMappato]==1 &&
-            vincolo->vincoliPerChar[2*charMappato+1] == 0)
-            return false;
-        validCharSet[charMappato]++;
-    }
-    //N+C
-    for (int m = 0; m < 64; m++) {
-        if (vincolo->vincoliPerChar[2*m+1] > validCharSet[m] || (vincolo->vincoliPerChar[2*m] == 1 && validCharSet[m] != vincolo->vincoliPerChar[2*m+1]))
-            return false;
-    }
-
+    
     for (int j = 0; j < lunghezzaParole; j++) {
 
         charMappato = mapCharToInteger(parola[j]);
@@ -1095,10 +1043,28 @@ bool rispettaVincoli(char *parola) {
             return false;
 
 
+        //M
+        if (vincolo->vincoliPerChar[2*charMappato]==1 &&
+            vincolo->vincoliPerChar[2*charMappato+1] == 0)
+            return false;
+
         //O
         if (vincolo->redPattern[charMappato + 64 * j] == 'F')
             return false;
-        /*
+        validCharSet[charMappato]++;
+
+    }
+
+    for (int j = 0; j < lunghezzaParole; j++) {
+
+        charMappato = mapCharToInteger(parola[j]);
+
+
+        //D
+        if (validCharSet[charMappato] <
+            vincolo->vincoliPerChar[2*charMappato+1])
+            return false;
+
         //E
         if (vincolo->vincoliPerChar[2*charMappato]==1&&
             vincolo->vincoliPerChar[2*charMappato+1] > 0 &&
@@ -1106,17 +1072,19 @@ bool rispettaVincoli(char *parola) {
             (validCharSet[charMappato]))
             return false;
 
-        //D
-        if (validCharSet[charMappato] <
-            vincolo->vincoliPerChar[2*charMappato+1])
+    }
+    //C
+    for (int m = 0; m < 64; m++) {
+        if (vincolo->vincoliPerChar[2*m+1] > validCharSet[m])
             return false;
-        */
-
-
-
     }
 
-
+    //N
+    for (int m = 0; m < 64; m++) {
+        if (vincolo->vincoliPerChar[2*m] == 1)
+            if (validCharSet[m] != vincolo->vincoliPerChar[2*m+1])
+                return false;
+    }
     return true;
 }
 bool rispettaLastVincolo(char *parola){
@@ -1181,8 +1149,7 @@ void insertIntoDictionary(char *text/*, unsigned int lung*/) {
 
         }
     }
-
-    //newNode->p = pre;
+    
 
     if (pre == NULL) {
         rootDizionario = newNode;
@@ -1195,9 +1162,7 @@ void insertIntoDictionary(char *text/*, unsigned int lung*/) {
 }
 
 
-//soluzione iterativa
 bool wordExistsInDictionary(char *s, unsigned int lungh) {
-    //ricerca in log(N)
 
     int esito;
 
@@ -1247,36 +1212,45 @@ int main() {
     currentCommand = '?';
 
     rootDizionario = NULL;
-    //tNIL.color = 'B';
+    
 
     listaFiltrate=NULL;
 
     int r = scanf("%d", &lunghezzaParole);
     text = malloc(lunghezzaParole);
+    
     //skip the /n
     r = getchar_unlocked();
 
     if (r == 0) {}
-    //char text[lunghezzaParole + 1];
+    
+    
+    
     //aggiunge parole alla struttura fino a un comando +nuovaPartita
     //gestisce anche il caso +inserisci_inizio
     //ipotesi: l'unico comando successivo a  +inerisci_inizio è inerisci_fine, non c'è bisogno di controllarlo
     initializeDictionary();
-    //finisce quando inizia una partita
-    //////IPOTESI: non è possibile uno +stampaFiltrate
+    
+    
+    
+    
     while (!abo) {
         if (currentCommand == 'n') {
             if (firstGame) {
-                initializeVincoli();
+                initializeVincoli(); //fa anche il reset dei vincoli
                 firstGame = false;
             } else {
                 resetVincoli();
                 freeList();
             }
+            
+            
+            
             handlePartita();
-        } else if (currentCommand == 's') {
-            printf("Non dovrebbe mai capitare!\n");
-        } else if (currentCommand == 'i') {
+            
+            
+            
+        }else if (currentCommand == 'i') {
             updateDictionary();
         } else {
             getStringFromLine(text);
